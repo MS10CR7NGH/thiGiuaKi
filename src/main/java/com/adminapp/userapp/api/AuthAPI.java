@@ -1,15 +1,19 @@
 package com.adminapp.userapp.api;
 
+import com.adminapp.userapp.config.JwtUtil; // <-- Import
 import com.adminapp.userapp.entity.UserCollection;
 import com.adminapp.userapp.repository.UsersRepository;
-import jakarta.servlet.http.HttpServletRequest;
+// import jakarta.servlet.http.HttpServletRequest; // <-- Không cần nữa
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpStatus; // <-- Import
+import org.springframework.http.ResponseEntity; // <-- Import
+// import org.springframework.security.authentication.UsernamePasswordAuthenticationToken; // <-- Không cần nữa
+// import org.springframework.security.core.Authentication; // <-- Không cần nữa
+// import org.springframework.security.core.context.SecurityContextHolder; // <-- Không cần nữa
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+// import java.util.ArrayList; // <-- Không cần nữa
+import java.util.Map; // <-- Import
 
 @RestController
 @RequestMapping("/api")
@@ -18,19 +22,35 @@ public class AuthAPI {
     @Autowired
     private UsersRepository usersRepository;
 
+    @Autowired
+    private JwtUtil jwtUtil; // <-- Tiêm JwtUtil
+
     @PostMapping("/auth/login")
-    public String login(@RequestParam String username, @RequestParam String password, HttpServletRequest request) {
+    // Thay đổi kiểu trả về từ String sang ResponseEntity<?>
+    // Bỏ HttpServletRequest
+    public ResponseEntity<?> login(@RequestParam String username, @RequestParam String password) {
 
         UserCollection user = usersRepository.findByUsername(username);
 
-        if(user == null) return "User not found";
-        if(!user.getPassword().equals(password)) return "Wrong password";
+        if (user == null) {
+            // Trả về lỗi 401
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+        }
+        if (!user.getPassword().equals(password)) {
+            // Trả về lỗi 401
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong password");
+        }
 
-        Authentication auth = new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
-        SecurityContextHolder.getContext().setAuthentication(auth);
+        // --- Bỏ toàn bộ logic tạo session ---
+        // Authentication auth = new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
+        // SecurityContextHolder.getContext().setAuthentication(auth);
+        // request.getSession(true);
 
-        request.getSession(true); // create session → JSESSIONID
+        // Tạo JWT
+        final String token = jwtUtil.generateToken(user.getUsername());
 
-        return "Login success";
+        // Trả về token cho client
+        // (Sẽ có dạng: {"token": "ey..."})
+        return ResponseEntity.ok(Map.of("token", token));
     }
 }
