@@ -10,7 +10,9 @@ public class UserDTO {
     private String username;
     private String email;
     private String password;
-    //private String image;
+    private String image;
+
+
 
     public String getId() {
         return id;
@@ -42,5 +44,13 @@ public class UserDTO {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 }
