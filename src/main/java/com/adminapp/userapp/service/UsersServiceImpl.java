@@ -7,25 +7,42 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
 public class UsersServiceImpl implements UsersService {
+    private final UploadImageFile uploadImageFile;
+
+
     @Autowired
     private UsersRepository usersRepository;
 
     @Autowired
     private ModelMapper modelMapper;
 
+    public UsersServiceImpl(UploadImageFile uploadImageFile) {
+        this.uploadImageFile = uploadImageFile;
+    }
+
     @Transactional
     @Override
-    public String createOrUpdateUsers(UserDTO userDTO) {
+    public String createOrUpdateUsers(UserDTO userDTO, MultipartFile file) throws IOException {
+        // 1. UPLOAD ẢNH và lưu URL
+        if (file != null && !file.isEmpty()) {
+            String imageUrl = uploadImageFile.uploadImageFile(file);
+            // Lưu URL ảnh đã upload (trả về từ Cloudinary) vào DTO
+            userDTO.setImage(imageUrl);
+        }
+
         UserCollection userCollection = modelMapper.map(userDTO, UserCollection.class);
         usersRepository.save(userCollection);
         String message;
         if (userDTO.getId() == null) {
-            message = "Created users successfully";
+            //message = "Created users successfully";
+            message = userCollection.getImage();
         }else {
             message = "Updated users successfully";
         }

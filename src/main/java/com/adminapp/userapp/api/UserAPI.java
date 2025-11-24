@@ -1,27 +1,44 @@
 package com.adminapp.userapp.api;
 
 import com.adminapp.userapp.model.UserDTO;
-//import com.adminapp.userapp.service.FileService;
+import com.adminapp.userapp.service.UploadImageFile;
 import com.adminapp.userapp.service.UsersService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.List;
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api")
 public class UserAPI {
 
+
+    private final UploadImageFile uploadImageFile;
+
+    public UserAPI(UploadImageFile uploadImageFile) {
+        this.uploadImageFile = uploadImageFile;
+    }
+
     @Autowired
     private UsersService usersService;
+
     @PostMapping("/users")
-    public String createOrUpdateUser(@RequestBody UserDTO user) {
-        return usersService.createOrUpdateUsers(user);
+    public String createOrUpdateUser(
+            @ModelAttribute UserDTO user, // Nhận dữ liệu JSON (hoặc Form data)
+            @RequestParam(value = "file", required = false) MultipartFile file // Nhận tệp ảnh, có thể null
+    ) throws IOException { // Thêm throws IOException
+        // usersService.createOrUpdateUsers cần nhận cả file
+        return usersService.createOrUpdateUsers(user, file);
     }
+
+//    @PostMapping("/users")
+//    public String createOrUpdateUser(@RequestBody UserDTO user) {
+//        return usersService.createOrUpdateUsers(user);
+//    }
 
     @GetMapping("/all/users")
     public List<UserDTO> getAllUsers() {
@@ -40,21 +57,9 @@ public class UserAPI {
         return usersService.deleteUserById(id);
     }
 
-//    @Autowired
-//    private FileService fileService;
-//
-//    @PostMapping("/upload")
-//    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
-//        try {
-//            String fileUrl = fileService.uploadFile(file);
-//
-//            // Trả về một đối tượng JSON chứa URL
-//            Map<String, String> response = new HashMap<>();
-//            response.put("url", fileUrl);
-//
-//            return ResponseEntity.ok(response);
-//        } catch (Exception e) {
-//            return ResponseEntity.status(500).body("File upload failed: " + e.getMessage());
-//        }
-//    }
+    @PostMapping("/upload/image")
+    public String uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
+        return uploadImageFile.uploadImageFile(file);
+    }
+
 }
